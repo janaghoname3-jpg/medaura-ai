@@ -1,0 +1,277 @@
+
+<!-- <?php include 'db_connection.php'; ?> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MedAura AI - Integrated Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* إضافة ستايل سريع للصفحات عشان نضمن ثبات الشكل */
+        .page-section { display: none; animation: fadeIn 0.3s; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* ستايل الكاميرا */
+        #cameraModal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            z-index: 9999; flex-direction: column; align-items: center; justify-content: center;
+        }
+        video { width: 90%; max-width: 500px; border: 2px solid #58a6ff; border-radius: 12px; }
+
+        /* ستايل جدول المرضى */
+        .patients-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .patients-table th, .patients-table td { padding: 15px; text-align: left; border-bottom: 1px solid #30363d; }
+        .status-badge { padding: 5px 10px; border-radius: 4px; font-size: 12px; }
+        .status-high { background: rgba(255, 123, 114, 0.2); color: #ff7b72; }
+    </style>
+</head>
+<body>
+    
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-logo"><i class="fas fa-wave-square"></i> MedAura AI</div>
+            <nav class="nav-menu">
+                <div class="nav-item active" data-page="dashboard"><i class="fas fa-th-large"></i> Dashboard</div>
+                <div class="nav-item" data-page="patients"><i class="fas fa-user-friends"></i> Patients</div>
+                <div class="nav-item" data-page="wound-ai"><i class="fas fa-brain"></i> Wound AI</div>
+                <div class="nav-item" data-page="analytics"><i class="fas fa-chart-line"></i> Analytics</div>
+                <div class="nav-item" data-page="settings"><i class="fas fa-cog"></i> Settings</div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <div class="header-right">
+                    <div class="notification-icon" id="bellIcon">
+                        <i class="far fa-bell"></i>
+                        <span class="badge"></span>
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-info">
+                            <span class="user-name">Dr. Sarah Chen</span>
+                            <span class="user-role">Wound Specialist</span>
+                        </div>
+                        <img src="https://via.placeholder.com/35" class="avatar" alt="Doctor">
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body">
+                
+                <section id="dashboard-page" class="page-section active">
+                    <div class="hero-section">
+                        <h1>Wound AI Assessment</h1>
+                        <p>Patient: <strong>Eleanor Vance</strong> (P-10234, 67)</p>
+                        <div class="tabs">
+                            <button class="t-btn active">Wound Analysis</button>
+                            <button class="t-btn">Healing Charts</button>
+                            <button class="t-btn">Timeline</button>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="card patient-card">
+                            <span class="card-label">Patient Profile</span>
+                            <div class="p-header">
+                                <img src="https://via.placeholder.com/50" class="p-img">
+                                <div><strong>Eleanor Vance</strong><br><small>ID: P-10234, 67</small></div>
+                            </div>
+                            <div class="history-list">
+                                <div class="h-item blue">Diabetes II <br><small>12 Mon - July 2023</small></div>
+                                <div class="h-item blue">Hypertension <br><small>8 Mon - Nov 2023</small></div>
+                                <div class="h-item">Ulcer 2023 <br><small>Medical Timeline</small></div>
+                            </div>
+                        </div>
+
+                        <div class="card upload-card" id="uploadCard" onclick="openCamera()">
+                            <span class="card-label">Upload Wound Image</span>
+                            <div class="drop-zone">
+                                <i class="fas fa-camera"></i>
+                                <p>Click to <strong>Open Camera</strong></p>
+                            </div>
+                        </div>
+
+                        <div class="card seg-card">
+                            <span class="card-label">Wound Segmentation</span>
+                            <div class="scan-box" id="scanBox">
+                                <div class="laser"></div>
+                                <span id="scanStatus">Waiting for image...</span>
+                            </div>
+                        </div>
+
+                        <div class="card risk-card">
+                            <span class="card-label">Infection Risk</span>
+                            <div class="risk-value">84% <span class="status">HIGH</span></div>
+                            <p>Stage 2 - Diabetic Foot Ulcer</p>
+                        </div>
+
+                        <div class="card graph-card">
+                            <span class="card-label">Healing Progress</span>
+                            <div class="chart-container">
+                                <canvas id="healingChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="patients-page" class="page-section">
+                    <div class="card">
+                        <h2>Patients Directory</h2>
+                        <table class="patients-table">
+                            <thead>
+                                <tr>
+                                    <th>Patient Name</th>
+                                    <th>ID</th>
+                                    <th>Last Visit</th>
+                                    <th>Infection Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                           <!-- <?php --> /*
+$result = $conn->query("SELECT * FROM patients ORDER BY id DESC");
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
+        echo "<tr>";
+        echo "<td>" . $row['patient_name'] . "</td>";
+        echo "<td>" . $row['id'] . "</td>";
+        echo "<td>" . date('M d, Y') . "</td>";
+        echo "<td><span class='status-badge' style='background: rgba(88,166,255,0.2); color: #58a6ff;'>" . $row['wound_area'] . " cm²</span></td>";
+        echo "</tr>";
+    }
+} else {
+    echo "<tr><td colspan='4' style='text-align:center;'>لا يوجد مرضى حالياً في قاعدة البيانات</td></tr>";
+}
+?> */   
+
+                                   
+                                    
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="wound-ai-page" class="page-section">
+                    <div class="card">
+                        <h2>Wound AI Models</h2>
+                        <p>Select AI model for analysis:</p>
+                        <div class="h-item blue" style="margin-top: 10px;">DeepLearning-WoundV3 (Active)</div>
+                        <div class="h-item" style="margin-top: 10px;">Classification-Model-B2 (Standby)</div>
+                    </div>
+                </section>
+
+                <section id="analytics-page" class="page-section">
+                    <div class="card">
+                        <h2>Regional Analytics</h2>
+                        <div style="height: 300px; display: flex; align-items: center; justify-content: center; border: 1px dashed #30363d;">
+                            <p><i class="fas fa-chart-pie"></i> Infection Trends Map Loading...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="settings-page" class="page-section">
+                    <div class="card">
+                        <h2>System Settings</h2>
+                        <div class="history-list">
+                            <div class="h-item">Dark Mode: Enabled</div>
+                            <div class="h-item">Notifications: On</div>
+                            <div class="h-item blue">Update AI Library</div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="cameraModal">
+        <video id="video-modal" autoplay></video>
+        <div style="margin-top: 20px;">
+            <button onclick="captureImage()" style="padding: 10px 20px; background: #58a6ff; border: none; border-radius: 5px; cursor: pointer;">Capture</button>
+            <button onclick="closeCamera()" style="padding: 10px 20px; background: #ff7b72; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+        </div>
+    </div>
+    <div class="camera-card">
+    <h3><i class="fa-solid fa-camera"></i> تصوير الجرح</h3>
+    
+    <div class="video-wrap">
+        <video id="video" playsinline autoplay></video>
+        <div class="camera-guideline"></div>
+    </div>
+
+    <div class="camera-controls">
+        <button id="btnScreenshot" class="btn-capture" title="التقاط صورة">
+            <div class="inner-circle"></div>
+        </button>
+        <button id="btnChangeCamera" class="btn-secondary">
+            <i class="fa-solid fa-sync"></i> تبديل الكاميرا
+        </button>
+    </div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div id="result-wrap" style="display:none;">
+        <h4>الصورة الملتقطة:</h4>
+        <img id="photo" alt="The screen capture will appear in this box.">
+        <div class="action-buttons">
+            <button onclick="retakePhoto()" class="btn-retake">إعادة تصوير</button>
+            <button onclick="savePhoto()" class="btn-save">اعتماد الصورة للتحليل</button>
+        </div>
+    </div>
+</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // 1. التنقل بين الصفحات
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelector('.nav-item.active').classList.remove('active');
+                item.classList.add('active');
+
+                const target = item.getAttribute('data-page');
+                document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+                document.getElementById(target + '-page').classList.add('active');
+            });
+        });
+
+        // 2. الكاميرا
+        function openCamera() {
+            document.getElementById('cameraModal').style.display = 'flex';
+            navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+                document.getElementById('video-modal').srcObject = stream;
+            });
+        }
+        function closeCamera() {
+            document.getElementById('cameraModal').style.display = 'none';
+            const stream = document.getElementById('video-modal').srcObject;
+            if (stream) stream.getTracks().forEach(track => track.stop());
+        }
+        function captureImage() {
+            document.getElementById('scanStatus').innerText = "Analyzing Captured Image...";
+            closeCamera();
+        }
+
+        // 3. الجراف (نفس شكل الصورة)
+        const ctx = document.getElementById('healingChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    data: [15, 25, 20, 35],
+                    borderColor: '#58a6ff',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(88, 166, 255, 0.1)'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    </script>
+</body>
+</html>

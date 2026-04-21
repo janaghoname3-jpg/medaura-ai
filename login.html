@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animated Login</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+background:linear-gradient(135deg,#0b1220,#111827,#1e293b);
+}
+
+.container{
+position:relative;
+width:800px;
+height:500px;
+background:#111827;
+border-radius:18px;
+overflow:hidden;
+box-shadow:0 15px 40px rgba(0,0,0,.45);
+border:1px solid rgba(255,255,255,.05);
+}
+
+/* forms */
+.form{
+position:absolute;
+top:0;
+width:50%;
+height:100%;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+padding:40px;
+transition:.6s;
+color:#fff;
+}
+
+.login{
+left:0;
+z-index:2;
+}
+
+.register{
+left:0;
+opacity:0;
+z-index:1;
+}
+
+input{
+width:100%;
+padding:12px;
+margin:8px;
+border:none;
+outline:none;
+background:#1f2937;
+color:#fff;
+border-radius:8px;
+}
+
+input::placeholder{
+color:#9ca3af;
+}
+
+button{
+padding:12px 35px;
+border:none;
+border-radius:25px;
+background:#2563eb;
+color:#fff;
+cursor:pointer;
+margin-top:10px;
+font-weight:bold;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+.panel{
+position:absolute;
+right:0;
+top:0;
+width:50%;
+height:100%;
+background:linear-gradient(135deg,#1d4ed8,#0f172a,#06b6d4);
+color:#fff;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+transition:.6s;
+z-index:5;
+padding:40px;
+text-align:center;
+}
+
+.panel button{
+background:transparent;
+border:2px solid #fff;
+}
+
+.panel button:hover{
+background:#fff;
+color:#0f172a;
+}
+
+.container.active .panel{
+transform:translateX(-100%);
+}
+
+.container.active .login{
+transform:translateX(100%);
+opacity:0;
+}
+
+.container.active .register{
+transform:translateX(100%);
+opacity:1;
+z-index:3;
+}
+
+h1{
+margin-bottom:15px;
+}
+
+p{
+color:#dbeafe;
+text-align:center;
+line-height:1.6;
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="box">
+
+<div class="form login">
+<h1>Sign In</h1>
+<input type="email" placeholder="Email">
+<input type="password" placeholder="Password">
+<button>Login</button>
+</div>
+
+<div class="form register">
+<h1>Create Account</h1>
+<input type="text" placeholder="Full Name">
+<input type="email" placeholder="Email">
+<input type="password" placeholder="Password">
+<button>Register</button>
+</div>
+
+<div class="panel">
+<h1 id="title">Welcome to MedAura AI</h1>
+<p id="text">Secure access to your professional dashboard</p>
+<button onclick="toggleForm()" id="switchBtn">Create Account</button>
+</div>
+
+</div>
+
+<script>
+let active = false;
+
+function toggleForm(){
+const box = document.getElementById("box");
+const title = document.getElementById("title");
+const text = document.getElementById("text");
+const btn = document.getElementById("switchBtn");
+
+box.classList.toggle("active");
+
+active = !active;
+
+if(active){
+title.innerText = "Account Registration";
+text.innerText = "Create your secure account to continue.";
+btn.innerText = "Sign In";
+}else{
+title.innerText = "Welcome to MedAura AI";
+text.innerText = "Secure access to your professional dashboard";
+btn.innerText = "Create Account";
+}
+}
+</script>
+
+</body>
+</html>
